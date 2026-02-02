@@ -274,7 +274,7 @@ float	IT_SUPER_NAILGUN	= 8;
 float	IT_GRENADE_LAUNCHER	= 16;
 float	IT_ROCKET_LAUNCHER	= 32;
 float	IT_LIGHTNING		= 64;
-//float	IT_EXTRA_WEAPON		= 128;
+float	IT_QUAD_SHOTGUN		= 128;		// ~rj
 
 // Used by the engine to update the Sbar with gfx type
 float	IT_SHELLS			= 256;
@@ -605,6 +605,9 @@ float AS_BACKWARD  = 8; // Turn 180 degrees and move backwards
 .float		distance;
 .float		volume;
 
+//==== misc
+.vector		oldvelocity; // ~rj
+
 //======================================================================
 // builtin functions
 //======================================================================
@@ -843,6 +846,17 @@ float (entity e, float healamount, float ignore) T_Heal;
 void(entity targ) item_proglist_setup;
 void() SUB_regen;
 
+// lights.qc (alkaline shadow stuff) ~rj
+//
+// lights and shadows
+//
+.float		switchshadstyle;
+.float		shadowoff;
+.entity 	shadowcontroller;
+.string 	targetname2;
+.float style2; //c0burn's switchable lights
+.float speed2;
+
 // monsters.qc
 void() monster_sightsound;
 void() monster_liquid_check;
@@ -872,6 +886,8 @@ void(entity targ) W_ChangeWeapon;
 void(entity targ) W_SetCurrentAmmo;
 float(entity targ) W_BestWeapon;
 void() W_WeaponFrame;
+.float qsg_firing;
+
 
 // ai_explosion.qc
 void(float sprite_type, vector org, string expl_sound) SpawnExplosion;

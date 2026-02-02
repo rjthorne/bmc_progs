@@ -280,6 +280,8 @@ float CT_PROJ_BLBOLT2 = 4730;	// Boglord fast bolt (red)
 // Grenade projectiles
 float CT_PROJ_GL = 5000;		// Grenade projectile
 float CT_PROJ_GLMON = 5010;		// Monster grenades
+float CT_PROJ_MULTIGLMON = 5011;		// Multi-G ogres ~rj
+float CT_PROJ_MINIGLMON = 5012;		// Multi-G ogres ~rj
 float CT_PROJ_MEGG = 5020;		// Minion Egg (grenade arc+bounce)
 float CT_PROJ_CHTHON2 = 5030;	// Chthon Frenzy (grenade arc)
 float CT_PROJ_SHUB2 = 5040;		// Shub Frenzy (grenade arc)
@@ -335,6 +337,7 @@ float CT_UPGRADE_GHOOK = 6004;	// Grapple Hook
 float CT_SHOTGUN = 6010;		// Shotgun
 float CT_SUPER_SHOTGUN = 6020;	// Super Shotgun
 float CT_UPGRADE_SSG = 6030;	// The Widowmaker Shotgun
+float CT_QUAD_SHOTGUN = 6035;	// Quad Shotgun ~rj
 float CT_NAILGUN = 6040;		// Nailgun
 float CT_SUPER_NAILGUN = 6050;	// Super Nailgun
 float CT_GRENADE_LAUNCHER = 6060;// Grenade Launcher

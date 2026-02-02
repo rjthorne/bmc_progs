@@ -13,6 +13,8 @@ float PiOverOneEighty = 0.017453;
 
 float() crandom = { return 2*(random() - 0.5); };
 
+float(float x, float y) randbetween = {return x + (y-x)*random();};
+
 // You can set the accuracy of mathlib by changing this value.
 // If unset, it defaults to 0.001
 float mathlib_accuracy; //accuracy of sqrt & pow

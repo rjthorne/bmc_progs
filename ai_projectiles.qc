@@ -1731,7 +1731,9 @@ void() Explode_Grenade =
 	self.state = STATE_DISABLED;
 	
 	// Customize damage based on projectile type
-	if (self.classtype == CT_PROJ_GLMON) self.dmg = DAMAGE_MONGRENADE;
+	if (self.classtype == CT_PROJ_GLMON
+		|| self.classtype == CT_PROJ_MULTIGLMON) self.dmg = DAMAGE_MONGRENADE;
+	else if (self.classtype == CT_PROJ_MINIGLMON) self.dmg = DAMAGE_MONMINIGRENADE;	
 	else if (self.classtype == CT_PROJ_MEGG) self.dmg = 0;
 	else if (self.classtype == CT_PROJ_NOUR2) {
 		self.dmg = DAMAGE_MONGRENADE;
@@ -1802,6 +1804,36 @@ void() Explode_Grenade =
 	// Hide grenade, no longer needed
 	entity_remove(self, 1);
 };
+
+// multi-g inspired by DoE but basically rewritten ~rj
+
+void() MultiGrenadeExplode = 
+{
+	local vector org, dir, avel;
+
+	org = self.origin;
+	avel = vecrand(100,200,FALSE);
+	
+	dir_x = randbetween(30,50);
+	dir_y = randbetween(-20,-10);
+	dir_z = randbetween(300,500);
+
+	Launch_Grenade(org, dir, avel, CT_PROJ_MINIGLMON);
+
+	dir_x = randbetween(-50,-30);
+	dir_y = randbetween(-20,-10);
+	dir_z = randbetween(300,500);
+
+	Launch_Grenade(org, dir, avel, CT_PROJ_MINIGLMON);
+
+	dir_x = randbetween(-10,10);
+	dir_y = randbetween(40,60);
+	dir_z = randbetween(300,500);
+
+	Launch_Grenade(org, dir, avel, CT_PROJ_MINIGLMON);
+
+	Explode_Grenade();
+}
 
 //----------------------------------------------------------------------
 void() Touch_Grenade =
@@ -1882,8 +1914,13 @@ void(vector org, vector dir, vector avel, float proj_type) Launch_Grenade =
 	//----------------------------------------------------------------------
 	newmis.solid = SOLID_BBOX;
 	newmis.touch = Touch_Grenade;
-	newmis.nextthink = time + LIFE_GRENADE;
-	newmis.think = Explode_Grenade;
+	if (proj_type == CT_PROJ_MINIGLMON) {
+		newmis.nextthink = time + 0.5 + random();
+	} else {
+		newmis.nextthink = time + LIFE_GRENADE;
+	}
+	if (proj_type == CT_PROJ_MULTIGLMON) newmis.think = MultiGrenadeExplode;
+	else newmis.think = Explode_Grenade;
 	newmis.noise = "weapons/bounce.wav";
 	newmis.bbmins = newmis.bbmaxs = VEC_ORIGIN;
 	newmis.height = EXPLODE_SMALL;
@@ -1895,6 +1932,14 @@ void(vector org, vector dir, vector avel, float proj_type) Launch_Grenade =
 	if (proj_type == CT_PROJ_GL) setmodel(newmis, MODEL_PROJ_GRENADE);
 	// proj_glmon is used by any monster firing grenades
 	else if (proj_type == CT_PROJ_GLMON) {
+		if (newmis.poisonous) setmodel(newmis, MODEL_PROJ_GRENADEGRN);
+		else setmodel(newmis, MODEL_PROJ_GRENADE);
+	}
+	else if (proj_type == CT_PROJ_MULTIGLMON) {
+		if (newmis.poisonous) setmodel(newmis, MODEL_PROJ_GRENADEGRN);
+		else setmodel(newmis, MODEL_PROJ_GRENADE);
+	}
+	else if (proj_type == CT_PROJ_MINIGLMON) {
 		if (newmis.poisonous) setmodel(newmis, MODEL_PROJ_GRENADEGRN);
 		else setmodel(newmis, MODEL_PROJ_GRENADE);
 	}
@@ -2023,7 +2068,12 @@ void(vector grenade_org, vector grenade_enemyorg) MonsterFireGrenade =
 	}
 
 	avel = vecrand(100,200,FALSE);
-	Launch_Grenade(grenade_org, dir, avel, CT_PROJ_GLMON);
+	if (self.classtype == CT_MONHOGREMAC) {
+		// mace ogres fire clusterbombs now ~rj
+		Launch_Grenade(grenade_org, dir, avel, CT_PROJ_MULTIGLMON);	
+	} else {
+		Launch_Grenade(grenade_org, dir, avel, CT_PROJ_GLMON);
+	}
 };
 
 /*======================================================================

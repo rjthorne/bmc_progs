@@ -343,6 +343,216 @@ void() light_customstyle_start =
 	}
 };
 
+/*==========
+lightstyle_fade_lookup ported from Alkaline ~rj
+==========*/
+string(float num) lightstyle_fade_lookup =
+{
+	switch (num)
+	{
+		case 0:
+			return "a";
+			break;
+		case 1:
+			return "b";
+			break;
+		case 2:
+			return "c";
+			break;
+		case 3:
+			return "d";
+			break;
+		case 4:
+			return "e";
+			break;
+		case 5:
+			return "f";
+			break;
+		case 6:
+			return "g";
+			break;
+		case 7:
+			return "h";
+			break;
+		case 8:
+			return "i";
+			break;
+		case 9:
+			return "j";
+			break;
+		case 10:
+			return "k";
+			break;
+		case 11:
+			return "l";
+			break;
+		case 12:
+			return "m";
+			break;
+		default:
+			error("count out of range\n");
+			break;
+	}
+};
+
+/********************
+misc_shadowcontroller ported from Alkaline ~rj
+
+Controls switchable shadows on any bmodel entity (except doors).
+Target entity must have set _switchableshadow set to 1.
+
+speed: Controls the time in seconds it takes to fade the shadow in. Default is 0.5, and setting it to -1 disables fading.
+speed2: Same as 'speed' but for the fade out animation. If unset it's the same value as 'speed'.
+spawnflag 1: target shadow starts as disabled
+
+*********************/
+
+float SHADOWCONTROLLER_STARTOFF = 1;
+
+void() shadow_fade_out = {
+	if (self.count < 0)
+		self.count = 0;
+	if (self.count > 12)
+		self.count = 12;
+
+	//dprint(ftos(self.count));dprint("\n");
+
+	lightstyle(self.switchshadstyle, lightstyle_fade_lookup(self.count));
+	self.count = self.count + self.dmg;
+	if (self.count > 12)
+		return;
+
+	self.think = shadow_fade_out;
+	self.nextthink = time + self.delay;
+};
+
+void() shadow_fade_in = {
+	if (self.count < 0)
+		self.count = 0;
+	if (self.count > 12)
+		self.count = 12;
+
+	//dprint(ftos(self.count));dprint("\n");
+
+	lightstyle(self.switchshadstyle, lightstyle_fade_lookup(self.count));
+	self.count = self.count - self.dmg;
+	if (self.count < 0)
+		return;
+
+	self.think = shadow_fade_in;
+	self.nextthink = time + self.delay;
+
+};
+
+void(float speed) misc_shadowcontroller_setsteps = {
+	// self.delay -> time between steps
+	// self.dmg -> step size
+
+	// yeah that's bad, I know
+	if (speed >= 0.24) {
+		self.delay = (speed/12);
+		self.dmg = 1;
+	}
+	else if (speed >= 0.12) {
+		self.delay = (speed/6);
+		self.dmg = 2;
+	}
+	else if (speed >= 0.06) {
+		self.delay = (speed/3);
+		self.dmg = 4;
+	}
+	else if (speed >= 0.04) {
+		self.delay = (speed/2);
+		self.dmg = 6;
+	}
+	else {
+		self.delay = 0;
+		self.dmg = 12;
+	}
+
+}
+
+void() misc_shadowcontroller_use = {
+
+	if (self.shadowoff) {
+		//dprint("Fade in:\n");
+
+		misc_shadowcontroller_setsteps(self.speed);
+
+		shadow_fade_in();
+
+		self.shadowoff = 0;
+	} else {
+		//dprint("Fade out:\n");
+
+		misc_shadowcontroller_setsteps(self.speed2);
+
+		shadow_fade_out();
+
+		self.shadowoff = 1;
+	}
+}
+
+void() misc_shadowcontroller_setup = {
+	entity t1;
+
+	// doesn't search for a target if switchshadstyle is already set
+	// used for built-in shadow controllers
+	if (!self.switchshadstyle) {
+
+		// we need to find only the first target entity with switchable shadows set, since shadow lightstyles are bound by targetname
+		
+		t1 = find(world, targetname2, self.target);
+		
+		while (t1 != world && !t1.switchshadstyle) {
+			t1 = find(t1, targetname2, self.target);
+		}
+		
+		if (t1 == world) {
+			t1 = find(world, targetname, self.target);
+			
+			while (t1 != world && !t1.switchshadstyle) {
+				t1 = find(t1, targetname, self.target);
+			}
+		}
+
+
+		if (t1 == world) {
+			dprint("\b[misc_shadowcontroller]\b _switchableshadow not set in target ");dprint(self.target);dprint("\n");
+			return;
+		}
+
+		self.switchshadstyle = t1.switchshadstyle;
+	}
+
+	if (!self.speed) self.speed = 0.5;
+	if (!self.speed2) self.speed2 = self.speed;
+
+	if (self.spawnflags & SHADOWCONTROLLER_STARTOFF) {
+		lightstyle(self.switchshadstyle, "m");
+
+		self.shadowoff = 1;
+		self.count = 12;
+
+		misc_shadowcontroller_setsteps(self.speed2);
+	}
+	else {
+		lightstyle(self.switchshadstyle, "a");
+		self.shadowoff = 0;
+		self.count = 0;
+		misc_shadowcontroller_setsteps(self.speed);
+	}
+
+	self.use = misc_shadowcontroller_use;
+};
+
+void() misc_shadowcontroller = {
+	
+	self.think = misc_shadowcontroller_setup;
+	self.nextthink = time + 0.1;
+};
+
+
 //======================================================================
 /*QUAKED light (0 1 0) (-8 -8 -8) (8 8 8) LIGHTOFF x x x x x x x
 Non-displayed light

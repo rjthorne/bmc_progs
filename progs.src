@@ -5,6 +5,7 @@ defscustom.qc
 defsclass.qc
 dpextensions.qc
 mathlib.qc
+copper_dprint.qc
 
 csqc_defs.qc
 // Pick AD or ID1 vers
@@ -40,6 +41,7 @@ ai_combat.qc
 ai_minions.qc
 ai_hazards.qc
 ai_projectiles.qc
+copper_projectiles.qc
 ai_checkattack.qc
 
 world.qc

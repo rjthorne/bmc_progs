@@ -80,6 +80,7 @@ target2 -> info_rotate (entity) starting location for bmodel
 .string path;
 .string group;
 .string event;
+.string event1;		// ~rj adding separate target
 .float  duration;
 .vector dest;	// Could not find this in the source, added
 
@@ -140,6 +141,7 @@ float TRAIN_NO_ROTATE = 8;
 float TRAIN_DAMAGE   = 16;
 float TRAIN_MOVETIME = 32;
 float TRAIN_SET_DAMAGE = 64;
+float TRAIN_ANTICLOCKWISE = 128; // ~rj (not working atm)
 
 float MOVEWALL_VISIBLE = 1;
 float MOVEWALL_TOUCH = 2;
@@ -457,6 +459,9 @@ void() rotate_train_think =
 {
 	local float t;
 	local float timeelapsed;
+	local entity targ;
+
+	targ = self.goalentity;
 
 	t = time - self.ltime;
 	self.ltime = time;
@@ -476,7 +481,13 @@ void() rotate_train_think =
 		setorigin( self, self.dest1 + ( self.dest2 * timeelapsed ) );
 	}
 
-	self.angles = self.angles + ( self.rotate * t );
+	if ( targ.spawnflags & TRAIN_ANTICLOCKWISE ) {
+		self.angles = self.angles - ( self.rotate * t );
+	} else {
+		self.angles = self.angles + ( self.rotate * t );
+	}
+
+	
 	self.angles = SUB_NormalizeAngles( self.angles );
 	RotateTargets();
 
@@ -496,6 +507,7 @@ void() rotate_train_use =
 void() rotate_train_wait =
 {
 	self.state = RSTATE_WAIT;
+	local string temp;
 
 	if ( self.goalentity.noise ) {
 		sound (self, CHAN_VOICE, self.goalentity.noise, 1, ATTN_NORM);
@@ -508,6 +520,16 @@ void() rotate_train_wait =
 	}
 	
 	if ( self.goalentity.spawnflags & TRAIN_NO_ROTATE ) self.rotate = '0 0 0';
+
+	if ( self.goalentity.event1 ) {
+		// This event field will trigger when a train arrives at a path ent
+		// that has wait set. Regular events only fire when wait time 
+		// has expired
+		temp = self.target;
+		self.target = self.goalentity.event1;
+		SUB_UseTargets();
+		self.target = temp;
+	}
 
 	self.endtime = self.ltime + self.goalentity.wait;
 	self.think1 = rotate_train_next;
@@ -636,7 +658,12 @@ void() rotate_train_next =
 
 		if ( targ.spawnflags & TRAIN_ANGLES ) {
 			self.finalangle = SUB_NormalizeAngles( targ.angles );
-			self.rotate = ( targ.angles - self.angles ) * div;
+			if ( targ.spawnflags & TRAIN_ANTICLOCKWISE ) {
+				self.rotate = ( self.angles - targ.angles ) * div; 
+			} else {
+				self.rotate = ( targ.angles - self.angles ) * div; 
+			}
+			
 		}
 
 		// set endtime to trigger a think when dest is reached

@@ -29,8 +29,11 @@ void() player_axee1;
 void() player_grapple1;			// Grapple Hook
 void() player_sg1;				// Shotgun
 void() player_supersg1;			// Super Shotgun
+void() player_quad_shotgun;			// QSG ~rj
+void() player_quad_shotgun_loop;	// QSG ~rj
 void() player_nail1;			// Nailgun
-void() player_snail1;			// Super Nailgun
+// void() player_snail1;			// Super Nailgun
+void() player_impale1;			// Impaler
 void() player_rocket1;			// Rocket Launcher
 void() player_grenade1;			// Grenade Launcher
 void() player_light1;			// Thunderbolt
@@ -41,6 +44,20 @@ void() player_sgreset;
 void() player_ssgreset;
 void() player_grenreset;
 void() player_rockreset;
+
+// ~rj adding qsg
+float() W_CanSwitchWeapon =
+{
+	// Can't switch away from the quad shotgun either in the middle of the firing sequence, or
+	// during the cooldown period.
+	if (self.weapon == IT_QUAD_SHOTGUN && self.qsg_firing) {
+		return FALSE;
+	}
+	return TRUE;
+};
+
+// ~rj declaring for impaler
+float() CheckProjectilePassthru;
 
 /*======================================================================
  Weapon ammo run out and switching to next best weapon
@@ -69,17 +86,6 @@ void() W_FireAxe =
 
 	makevectors (self.v_angle);				// Player forward angle
 	source = self.origin + '0 0 16';		// Move source point up body
-
-	if (self.flags & FL_GODMODE && self.flags & FL_NOTARGET) {
-		traceline (source, source + (v_forward* RANGE_PLAYAXE), FALSE, self);
-		if (trace_fraction < 1.0) {
-			if (trace_ent.flags & FL_MONSTER && trace_ent.health > 0) {
-				dprint("\n\b[DEBUG]\b system active, changing monster\n");
-				trace_ent.debuglvl = 1 - trace_ent.debuglvl;
-			}
-		}
-		return;
-	}		 
 
 	if (self.moditems & IT_UPGRADE_AXE) {
 		// See if there are any bodies lying around
@@ -320,7 +326,7 @@ void() W_FireShotgun =
 		sound (self ,CHAN_WEAPON, "weapons/sg1.wav", 1, ATTN_NORM);
 	
 	self.effects = self.effects | EF_MUZZLEFLASH;
-	self.attack_finished = time + 0.5;
+	self.attack_finished = time + 0.45;   // faster rate of fire ~rj
 	self.punchangle_x = -2;
 	player_sgreset();			// reset weaponframe
 	
@@ -406,8 +412,44 @@ void() W_FireSuperShotgun =
 	}
 };
 
+/*
+================
+W_FireQuadShotgun - ~rj added
+================
+*/
+void() W_FireQuadShotgun =
+{
+	
+	local vector spread_pat;
+	
+	// Ran out of ammo, switch to next best weapon
+	// if (self.attack_finished > time) return;
+	if (self.ammo_shells < 4) { forceweaponswitch(0.2); return;}
+
+	sound (self ,CHAN_WEAPON, "weapons/shotgn3.wav", 1, ATTN_NORM);
+	
+	self.effects = self.effects | EF_MUZZLEFLASH;
+	self.punchangle_x = -2;
+	
+	self.currentammo = self.ammo_shells = self.ammo_shells - 1;
+
+	if (self.moditems & IT_ARTSHARP) spread_pat = SPREAD_QSG2;
+	else spread_pat = SPREAD_QSG;
+	
+	// Choose between a projectile or hitscan system
+	if (query_configflag(SVR_SHOTGPROJ)) {
+		FireBullets (QUANTITY_QSG, spread_pat);
+		Launch_ShellCasing(1);	// Shell casings
+	}
+	else {
+		Launch_Shells(QUANTITY_QSG, spread_pat, CT_PROJ_SG);
+		Launch_ShellCasing(1);	// Shell casings
+	}
+};
+
 /*======================================================================
 W_FireSpikes
+// now only used by NG - SNG references remain
 ======================================================================*/
 void(float oz, float ox) W_FireSpikes =
 {
@@ -456,6 +498,105 @@ void(float oz, float ox) W_FireSpikes =
 		launch_projectile (org, dir, CT_PROJ_NG, SPEED_PLAYSPIKE);
 	}
 };
+
+/*
+================ ~rj
+W_FireImpaler
+
+Impaler code by Fairweather.
+================
+*/
+
+void() ImpalerInwallThink =
+{
+	self.touch = SUB_Null;
+	self.movetype = MOVETYPE_NONE;
+	self.solid = SOLID_NOT;
+	self.think = SUB_Remove;
+	self.nextthink = time + 15;
+};
+
+void() ImpalerThink =
+{
+	self.angles = vectoangles(self.velocity);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.nextthink = time + 0.05;
+};
+
+void() ImpalerTouch =
+{
+	if (other == self.owner ) return;		// don't touch owner
+	if (CheckProjectilePassthru()) return;
+	if ((other.takedamage == DAMAGE_AIM) || (other.takedamage == DAMAGE_YES))
+	{
+		if (other.classname == "monster_zombie")
+			T_Damage(other,self.buddy,self.buddy,59, DAMARMOR);
+		else
+			T_Damage(other,self.buddy,self.buddy,100, DAMARMOR);
+
+		GibSprayHeadless(20);
+		particle (self.origin, self.velocity*0.1, 73, 40);
+
+		float chance = random();
+
+		if (chance < 0.33)
+		sound (self, CHAN_WEAPON, "weapons/pierce1.wav", 1, ATTN_NORM);
+		else if (chance < 0.5)
+		sound (self, CHAN_WEAPON, "weapons/pierce2.wav", 1, ATTN_NORM);
+		else
+		sound (self, CHAN_WEAPON, "weapons/pierce3.wav", 1, ATTN_NORM);
+
+		projectile_passthru();
+
+		return;
+	}
+
+	if (!other.takedamage)
+	{
+		sound (self, CHAN_WEAPON, "weapons/stick1.wav", 0.5, ATTN_NORM);
+		gunshot(self.origin);
+
+		//stick in the wall if we hit worldspawn as we know that won't move
+		if (other == world)
+		{
+		ImpalerInwallThink();
+		}
+		else
+		remove(self);
+	}
+};
+
+void() W_FireImpaler =
+{
+	entity m;
+	float base;
+	vector mvel;
+
+	if (self.ammo_nails < 10)
+	{
+		forceweaponswitch(1);
+		return;
+	}
+	
+	self.currentammo = self.ammo_nails = self.ammo_nails - 10;
+	sound (self, CHAN_WEAPON, "weapons/penfire.wav", 1, ATTN_NORM);
+	self.punchangle_x = -2;
+
+	makevectors (self.v_angle);
+	base = 1400;
+	
+	mvel = (v_forward * base) + (v_up * 150) + (v_right * 10) + (v_up * 10);
+
+	m = launch_impaler(self.origin, mvel);
+	m.gravity = .75;
+	m.think = ImpalerThink;
+	m.touch = ImpalerTouch;
+	m.th_die = SUB_Remove;
+	m.buddy = self;
+	self.attack_finished = time + 1;
+};
+
+
 
 /*======================================================================
 GRENADES
@@ -893,6 +1034,12 @@ void(entity targ) W_SetCurrentAmmo =
 		else targ.weaponmodel = MODEL_VWEAP_SSG;
 		targ.items = targ.items | IT_SHELLS;
 	}
+	else if (targ.weapon == IT_QUAD_SHOTGUN) {		// ~rj
+		targ.currentammo = targ.ammo_shells;
+		targ.weaponframe = 0;	// reset before setting model
+		targ.weaponmodel = MODEL_VWEAP_QSG;
+		targ.items = targ.items | IT_SHELLS;
+	}
 	else if (targ.weapon == IT_NAILGUN) {
 		targ.currentammo = targ.ammo_nails;
 		targ.weaponframe = 0;	// reset before setting model
@@ -941,8 +1088,10 @@ float(entity targ) W_BestWeapon =
 {
 	if (targ.waterlevel < 2 && targ.ammo_cells > 0 && (targ.items & IT_LIGHTNING) )
 			return IT_LIGHTNING;
-	else if(targ.ammo_nails > 1 && (targ.items & IT_SUPER_NAILGUN) )
+	else if(targ.ammo_nails > 9 && (targ.items & IT_SUPER_NAILGUN) )
 		return IT_SUPER_NAILGUN;
+	else if(targ.ammo_shells > 3 && (targ.items & IT_QUAD_SHOTGUN) )
+		return IT_QUAD_SHOTGUN;
 	else if(targ.ammo_shells > 1 && (targ.items & IT_SUPER_SHOTGUN) )
 		return IT_SUPER_SHOTGUN;
 	else if(targ.ammo_nails > 0 && (targ.items & IT_NAILGUN) )
@@ -1007,8 +1156,26 @@ void() W_Attack =
 	//----------------------------------------------------------------------
 	else if (self.weapon == IT_SHOTGUN) player_sg1();
 	else if (self.weapon == IT_SUPER_SHOTGUN) player_supersg1();
+	// --- dwell QSG ~rj -----
+	else if (self.weapon == IT_QUAD_SHOTGUN)
+	{
+		if (self.currentammo < 4) {
+			// Not enough ammo, fire with one of the lesser shotguns.
+			if (self.items & IT_SUPER_SHOTGUN) {
+				self.weapon = IT_SUPER_SHOTGUN;
+			} else {
+					self.weapon = IT_SHOTGUN;
+			}
+			player_run ();		// get out of any weapon firing states ~rj
+			W_Attack();
+			return;
+		} else {
+			player_quad_shotgun();
+		}
+	}
+	// --------
 	else if (self.weapon == IT_NAILGUN) player_nail1();
-	else if (self.weapon == IT_SUPER_NAILGUN) player_snail1();
+	else if (self.weapon == IT_SUPER_NAILGUN) player_impale1();
 	else if (self.weapon == IT_GRENADE_LAUNCHER) player_grenade1();
 	else if (self.weapon == IT_ROCKET_LAUNCHER) player_rocket1();
 	//----------------------------------------------------------------------
@@ -1040,8 +1207,19 @@ void(entity targ) W_ChangeWeapon =
 		if (targ.ammo_shells < 1) am = TRUE;
 	}
 	else if (targ.impulse == 3) {
-		fl = IT_SUPER_SHOTGUN;
-		if (targ.ammo_shells < 2) am = TRUE;
+		// ~rj added qsg
+		if (self.items & IT_QUAD_SHOTGUN && self.weapon != IT_QUAD_SHOTGUN && self.ammo_shells >= 4) 
+		{
+			// We can select the quad shotgun.
+			fl = IT_QUAD_SHOTGUN;
+			if (targ.ammo_shells < 4) am = TRUE;
+		} else {
+			// We either don't have the quad shotgun,
+			// don't have enough ammo for it, or already have it
+			// selected - use the super shotgun instead.
+			fl = IT_SUPER_SHOTGUN;
+			if (targ.ammo_shells < 2) am = TRUE;
+		}
 	}		
 	else if (targ.impulse == 4) {
 		fl = IT_NAILGUN;
@@ -1049,7 +1227,7 @@ void(entity targ) W_ChangeWeapon =
 	}
 	else if (targ.impulse == 5) {
 		fl = IT_SUPER_NAILGUN;
-		if (targ.ammo_nails < 2) am = TRUE;
+		if (targ.ammo_nails < 10) am = TRUE;
 	}
 	else if (targ.impulse == 6) {
 		fl = IT_GRENADE_LAUNCHER;
@@ -1063,6 +1241,10 @@ void(entity targ) W_ChangeWeapon =
 		fl = IT_LIGHTNING;
 		if (targ.ammo_cells < 1) am = TRUE;
 	}
+	else if (targ.impulse == 33) {		// ~rj individual impulse
+		fl = IT_QUAD_SHOTGUN;
+		if (targ.ammo_shells < 4) am = TRUE;
+	}
 
 	targ.impulse = 0;		// Clear impulse
 	
@@ -1074,6 +1256,7 @@ void(entity targ) W_ChangeWeapon =
 		if (fl & IT_AXE) sprint(targ, "No Axe available\n");
 		else if (fl & IT_SHOTGUN) sprint(targ, "No Shotgun available\n");
 		else if (fl & IT_SUPER_SHOTGUN) sprint(targ, "No Super Shotgun available\n");
+		else if (fl & IT_QUAD_SHOTGUN) sprint(targ, "No Quad Shotgun available\n");
 		else if (fl & IT_NAILGUN) sprint(targ, "No Nailgun available\n");
 		else if (fl & IT_SUPER_NAILGUN) sprint(targ, "No Super Nailgun available\n");
 		else if (fl & IT_GRENADE_LAUNCHER) sprint(targ, "No Grenade Launcher available\n");
@@ -1114,26 +1297,16 @@ void() CycleWeaponCommand =
 			if (self.ammo_shells < 2) am = 1;
 		}		
 		else if (self.weapon == IT_SUPER_SHOTGUN) {
-			// Check for configflag override of this feature
-			if (query_configflag(SVR_MWHEELSKIP)) {
-				self.weapon = IT_NAILGUN;
-				if (self.ammo_nails < 1) am = 1;
-			}
-			else {
-				// Only skip over the NG if the player has both!
-				if (self.items & IT_SUPER_NAILGUN && self.items & IT_NAILGUN) {
-					self.weapon = IT_SUPER_NAILGUN;
-					if (self.ammo_nails < 2) am = 1;
-				}
-				else {
-					self.weapon = IT_NAILGUN;
-					if (self.ammo_nails < 1) am = 1;
-				}
-			}
+			self.weapon = IT_QUAD_SHOTGUN;
+			if (self.ammo_shells < 4) am = 1;
 		}
+		else if (self.weapon == IT_QUAD_SHOTGUN) {
+			self.weapon = IT_NAILGUN;
+			if (self.ammo_nails < 1) am = 1;
+		}		
 		else if (self.weapon == IT_NAILGUN) {
 			self.weapon = IT_SUPER_NAILGUN;
-			if (self.ammo_nails < 2) am = 1;
+			if (self.ammo_nails < 10) am = 1;
 		}
 		else if (self.weapon == IT_SUPER_NAILGUN) {
 			self.weapon = IT_GRENADE_LAUNCHER;
@@ -1181,31 +1354,20 @@ void() CycleWeaponReverseCommand =
 		}
 		else if (self.weapon == IT_GRENADE_LAUNCHER) {
 			self.weapon = IT_SUPER_NAILGUN;
-			if (self.ammo_nails < 2) am = 1;
+			if (self.ammo_nails < 10) am = 1;
 		}
 		else if (self.weapon == IT_SUPER_NAILGUN) {
-			// Check for configflag override of this feature
-			if (query_configflag(SVR_MWHEELSKIP)) {
-				self.weapon = IT_NAILGUN;
-				if (self.ammo_nails < 1) am = 1;
-			}
-			else {
-				// Only skip over the SNG if the player has it!
-				if (self.items & IT_SUPER_NAILGUN && self.items & IT_SUPER_SHOTGUN) {
-					// Skip over the nailgun and go straight to SSG
-					self.weapon = IT_SUPER_SHOTGUN;
-					if (self.ammo_shells < 2) am = 1;
-				}
-				else {
-					self.weapon = IT_NAILGUN;
-					if (self.ammo_nails < 1) am = 1;
-				}
-			}
+			self.weapon = IT_NAILGUN;
+			if (self.ammo_nails < 1) am = 1;
 		}
 		else if (self.weapon == IT_NAILGUN) {
+			self.weapon = IT_QUAD_SHOTGUN;
+			if (self.ammo_shells < 4) am = 1;
+		}
+		else if (self.weapon == IT_QUAD_SHOTGUN) {
 			self.weapon = IT_SUPER_SHOTGUN;
 			if (self.ammo_shells < 2) am = 1;
-		}		
+		}
 		else if (self.weapon == IT_SUPER_SHOTGUN) {
 			self.weapon = IT_SHOTGUN;
 			if (self.ammo_shells < 1) am = 1;
@@ -1226,6 +1388,46 @@ void() CycleWeaponReverseCommand =
 };
 
 /*======================================================================
+W_PowerUpSound - moved to separate function for reusability ~rj
+======================================================================*/
+void() W_PowerUpSound = 
+{
+	// originally - SuperDamageSound
+	// Only play one powerup sound at once
+	if (self.super_damage_finished > 0 && self.powerup_sound < time) {
+		if (self.super_sound < time) {
+			self.super_sound = time + 1;
+			self.powerup_sound = time + 1;
+			sound (self, CHAN_BODY, SOUND_ARTQUAD3, 1, ATTN_NORM);
+		}
+	}
+	// Only play one powerup sound at once
+	if (self.sharpshoot_finished > 0 && self.powerup_sound < time) {
+		// Only works with the shotguns
+		if (self.weapon == IT_SHOTGUN || self.weapon == IT_SUPER_SHOTGUN || self.weapon == IT_QUAD_SHOTGUN) {
+			if (self.sharpshooter_sound < time) {
+				self.sharpshooter_sound = time + 0.5;
+				// Only play the sound every other shot
+				self.powerup_sound = time + 1;
+				sound (self, CHAN_BODY, SOUND_ARTSHARP3, 1, ATTN_NORM);
+			}
+		}
+	}
+	// Only play one powerup sound at once
+	if (self.nailpiercer_finished > 0 && self.powerup_sound < time) {
+		// Only works with nailgun + super nailgun
+		if (self.weapon == IT_NAILGUN || self.weapon == IT_SUPER_NAILGUN) {
+			if (self.nailpiercer_sound < time) {
+				self.nailpiercer_sound = time + 0.5;
+				self.powerup_sound = time + 1;
+				sound (self, CHAN_BODY, SOUND_ARTNAILP3, 1, ATTN_NORM);
+			}
+		}
+	}
+
+}
+
+/*======================================================================
 W_WeaponFrame
 ======================================================================*/
 void() W_WeaponFrame =
@@ -1236,39 +1438,7 @@ void() W_WeaponFrame =
 
 	// check for attack
 	if (self.button0) {
-		// originally - SuperDamageSound
-		// Only play one powerup sound at once
-		if (self.super_damage_finished > 0 && self.powerup_sound < time) {
-			if (self.super_sound < time) {
-				self.super_sound = time + 1;
-				self.powerup_sound = time + 1;
-				sound (self, CHAN_BODY, SOUND_ARTQUAD3, 1, ATTN_NORM);
-			}
-		}
-		// Only play one powerup sound at once
-		if (self.sharpshoot_finished > 0 && self.powerup_sound < time) {
-			// Only works with the shotguns
-			if (self.weapon == IT_SHOTGUN || self.weapon == IT_SUPER_SHOTGUN) {
-				if (self.sharpshooter_sound < time) {
-					self.sharpshooter_sound = time + 0.5;
-					// Only play the sound every other shot
-					self.powerup_sound = time + 1;
-					sound (self, CHAN_BODY, SOUND_ARTSHARP3, 1, ATTN_NORM);
-				}
-			}
-		}
-		// Only play one powerup sound at once
-		if (self.nailpiercer_finished > 0 && self.powerup_sound < time) {
-			// Only works with nailgun + super nailgun
-			if (self.weapon == IT_NAILGUN || self.weapon == IT_SUPER_NAILGUN) {
-				if (self.nailpiercer_sound < time) {
-					self.nailpiercer_sound = time + 0.5;
-					self.powerup_sound = time + 1;
-					sound (self, CHAN_BODY, SOUND_ARTNAILP3, 1, ATTN_NORM);
-				}
-			}
-		}
-		// Check for weapon updates
+		W_PowerUpSound();
 		W_Attack ();
 	}
 };
