@@ -302,7 +302,7 @@ float() impulse_skill03only =
 ======================================================================*/
 void() ImpulseCommands =
 {
-	if (self.impulse >= 1 && self.impulse <= 8) W_ChangeWeapon (self);
+	if ((self.impulse >= 1 && self.impulse <= 8) || self.impulse == 33) W_ChangeWeapon (self);	// ~rj added QSG
 	else if (self.impulse == 10) CycleWeaponCommand();
 	else if (self.impulse == 12) CycleWeaponReverseCommand();
 
@@ -347,6 +347,7 @@ void() ImpulseCommands =
 	else if (self.impulse == 196) reset_randomizer();	// Reset seed for Chaos system
 	
 	// Only works developer only)
+
 	else if (self.impulse == 200) toggleupgradeaxe();	// Toggle Axe Upgrade
 	else if (self.impulse == 202) toggleupgradehook();	// Toggle GrappleHook Upgrade
 	else if (self.impulse == 205) toggleupgradessg();	// Toggle Shotgun Upgrade
@@ -1465,11 +1466,11 @@ void() CheatCommand =
 	dprint("\b[Impulse 9]\b Weapon Cheat Command\n");
 	dprint("- Use Impulse 245 to get silver/gold keys!\n");
 	self.impulse = 0;
-	self.ammo_rockets = 75;
-	self.ammo_nails = 150;
-	self.ammo_shells = 150;
-	self.ammo_cells = 150;
-	self.items = self.items | IT_AXE | IT_SHOTGUN | IT_SUPER_SHOTGUN | IT_NAILGUN |
+	self.ammo_rockets = 50;
+	self.ammo_nails = 300;
+	self.ammo_shells = 200;
+	self.ammo_cells = 75;
+	self.items = self.items | IT_AXE | IT_SHOTGUN | IT_SUPER_SHOTGUN | IT_QUAD_SHOTGUN | IT_NAILGUN |
 				IT_SUPER_NAILGUN | IT_GRENADE_LAUNCHER | IT_ROCKET_LAUNCHER | IT_LIGHTNING;
 	self.items = self.items | IT_ARMOR1;
 	self.weapon = IT_LIGHTNING;
