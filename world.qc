@@ -314,6 +314,7 @@ void() worldspawn =
 	//	precache_sound ("weapons/guncock.wav");	// player shotgun (not used anymore)
 	precache_sound ("weapons/sg1.wav");			// Original SG (reduced hiss/noise)	
 	precache_sound ("weapons/sg2.wav");			// New SG (with shell casing)
+	precache_sound ("weapons/shotgn3.wav");		// Dwell QSG ~rj
 	precache_sound ("weapons/ric1.wav");		// ricochet (used in c code)
 	precache_sound ("weapons/ric2.wav");		// ricochet (used in c code)
 	precache_sound ("weapons/ric3.wav");		// ricochet (used in c code)
@@ -329,6 +330,12 @@ void() worldspawn =
 	precache_sound (SOUND_PLASMA_FIRE);			// Player PG (eliminator)
 	precache_sound (SOUND_PLASMA_HIT);			// New fire/impact sounds
 	precache_sound (SOUND_MISFIRE);				// Weapon jams/noammo/broken
+
+	precache_sound ("weapons/pierce1.wav");		// impaler mob hit 1
+	precache_sound ("weapons/pierce2.wav");		// impaler mob hit 2
+	precache_sound ("weapons/pierce3.wav");		// impaler mob hit 3
+	precache_sound ("weapons/penfire.wav");		// impaler atk
+	precache_sound ("weapons/stick1.wav");		// impaler wall hit 
 
 	//----------------------------------------------------------------------
 	precache_sound (SOUND_REXP3);				// Original explosion
@@ -458,6 +465,7 @@ void() worldspawn =
 	precache_model (MODEL_VWEAP_SG);
 	precache_model (MODEL_VWEAP_SSG);
 	precache_model (MODEL_VWEAP_UPSSG);		// Upgrade - Widowmaker
+	precache_model (MODEL_VWEAP_QSG);		// QSG ~rj
 	precache_model (MODEL_VWEAP_NG);
 	precache_model (MODEL_VWEAP_SNG);
 	precache_model (MODEL_VWEAP_GL);
@@ -485,6 +493,9 @@ void() worldspawn =
 	precache_model (MODEL_PROJ_SNG);
 	precache_model (MODEL_PROJ_GRENADE);
 	// precache_model (MODEL_PROJ_GRENADEGRN);	// Poisonous Grenade
+	precache_model ("progs/w_spike2.mdl");			// impaler ~rj
+	precache_model ("progs/proj_impalespike.mdl");	// impaler ~rj
+
 	precache_model (MODEL_PROJ_ROCKET);
 	precache_model (MODEL_BACKPACK);		// DropBackpack - items.qc
 	

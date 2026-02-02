@@ -142,8 +142,9 @@ void() ammostats_phase1 =
 		if (entlist.flags & FL_ITEM && entlist.classgroup == CG_WEAPON) {
 			as_wpnqty = as_wpnqty + 1;
 
+			// QSG added -~rj
 			if (entlist.classtype == CT_SHOTGUN || entlist.classtype == CT_SUPER_SHOTGUN 
-				|| entlist.classtype == CT_UPGRADE_SSG) {
+				|| entlist.classtype == CT_UPGRADE_SSG || entlist.classtype == CT_QUAD_SHOTGUN) {
 				shellqty[AC_WEAPON] = shellqty[AC_WEAPON] + entlist.aflag;
 				shellqty[AC_SHOTSTART] = TRUE;
 				// Reached display limit?
