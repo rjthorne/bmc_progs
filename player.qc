@@ -276,6 +276,62 @@ void() player_supersg6 =[$shotatt6, player_supersg1] {
 	}
 };
 
+/*
+=============
+Quad shotgun ~rj added from snack pack
+=============
+*/
+void() player_quad_shotgun = 
+{
+	
+	self.qsg_firing = TRUE;
+	self.attack_finished = time + 1.3;
+	
+	self.weaponframe = 0;
+	player_quad_shotgun_loop();
+};
+
+void() player_quad_shotgun_loop = 
+{
+	//shotatt1 shotatt2 shotatt3 shotatt4 shotatt5 shotatt6
+	self.weaponframe += 1;
+	
+	if ( self.weaponframe < 33 ) 
+	{
+		// We're in the initial firing phase
+		if ( mod( self.weaponframe, 8 ) == 1 ) 
+		{
+			self.frame = $shotatt1;
+			self.effects = self.effects | EF_MUZZLEFLASH;
+			W_FireQuadShotgun();
+		} 
+		else 
+		{
+			if ( self.frame < $shotatt6 )
+				self.frame++;
+			else 
+				self.frame--;
+		}
+	} 
+	else 
+	{
+		// Now in the cooldown phase
+		self.qsg_firing = FALSE;
+		
+		self.frame = $shotatt6; // idle player at last frame during spindown animation
+
+		if ( self.weaponframe == 72 ) 
+		{
+			self.weaponframe = 0;
+			player_run();
+			return;
+		}
+	}
+	
+	self.think = player_quad_shotgun_loop;
+	self.nextthink = time + 0.025;
+};
+
 //============================================================================
 // The Nailgun
 //============================================================================
@@ -296,28 +352,28 @@ void() player_nail7 =[$nailatt1, player_nail8] {nail_upd(7,2);};
 void() player_nail8 =[$nailatt2, player_nail1] {nail_upd(8,-2);};
 
 //============================================================================
-// The Super Nailgun
-// I really liked the idea of saving the frame number of the SNG
-// so that when it stops/starts it remembers where it left off
-// Unfortunately the gun is reset to frame 0 - the idle state
-// when the weapon is not being fired.
-// - SNG projectile offset idea by Kinn
-//============================================================================
-void(float oframe, float oz, float ox) snail_upd = {
-	if (frame_pause()) return;
-	if (!self.button0) { player_run(); return; }
-	self.weaponframe = oframe;
-	W_FireSpikes (oz,ox);
-};
+//  Super Nailgun code removed
 
-void() player_snail1 =[$nailatt1, player_snail2] {snail_upd(1,8,2.5);};
-void() player_snail2 =[$nailatt2, player_snail3] {snail_upd(2,5.5,-3.5);};
-void() player_snail3 =[$nailatt1, player_snail4] {snail_upd(3,3,2.5);};
-void() player_snail4 =[$nailatt2, player_snail5] {snail_upd(4,9,0);};
-void() player_snail5 =[$nailatt1, player_snail6] {snail_upd(5,3,-2.5);};
-void() player_snail6 =[$nailatt2, player_snail7] {snail_upd(6,5.5,3.5);};
-void() player_snail7 =[$nailatt1, player_snail8] {snail_upd(7,8,-2.5);};
-void() player_snail8 =[$nailatt2, player_snail1] {snail_upd(8,2,0);};
+
+// === Impaler === ~rj
+void() player_impale1 =[$shotatt1, player_impale2] { 
+	if (frame_pause()) return;
+	self.weaponframe=IDLE_WEAPON_FRAME;
+	if (!self.button0) { player_run(); return; }
+	W_FireImpaler();
+};
+void() player_impale2 =[$shotatt2, player_impale3] { if (!frame_pause()) self.weaponframe=2; };
+void() player_impale3 =[$shotatt3, player_impale4] { if (!frame_pause()) self.weaponframe=3; };
+void() player_impale4 =[$shotatt4, player_impale5] { if (!frame_pause()) self.weaponframe=4; };
+void() player_impale5 =[$shotatt5, player_impale6] { if (!frame_pause()) self.weaponframe=5; };
+void() player_impale6 =[$shotatt6, player_impale1] { 
+	if (!frame_pause()) {
+		self.weaponframe=6;
+		// If player has insufficient nails, switch
+		if (self.ammo_nails < 10) { forceweaponswitch(1); return;}
+	}
+};
+// ===============
 
 //============================================================================
 void() player_plasma1 =[$light1, player_plasma2] {
