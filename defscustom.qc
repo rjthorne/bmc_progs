@@ -921,13 +921,18 @@ float SPEED_MONSG = 800;			// Monster speed for SG
 float SPEED_MONSGMULT = 150;		// 800=easy, 950=normal, 1100=hard, 1250=nm
 float QUANTITY_SG = 6;				// SG - Shotgun
 float QUANTITY_SSG = 14;			// SSG - Super Shotgun
+float QUANTITY_QSG = 10;			// QSG - quad Shotgun ~rj
 float QUANTITY_WM = 21;				// WM - Widow Maker
 float QUANTITY_GRUNT = 4;			// Soldier
 float QUANTITY_DEFENDER = 10;		// Defender
-vector SPREAD_SG = '0.04 0.04 0';	// Narrow and square spread
+vector SPREAD_SG = '0.015 0.015 0';	// Narrow and square spread - ~rj updated for handgun
 vector SPREAD_SG2 = '0.01 0.01 0';	// Sharpshooter version
 vector SPREAD_SSG = '0.14 0.08 0';	// Wide and short SSG spread
 vector SPREAD_SSG2 = '0.04 0.04 0';	// Sharpshooter version
+vector SPREAD_QSG = '0.10 0.02 0';	// QSG standard ~rj
+vector SPREAD_QSG2 = '0.01 0.01 0';	// Sharpshooter version ~rj
+
+
 vector SPREAD_GRUNT = '0.1 0.1 0';	// Solider version (very narrow)
 vector SPREAD_DEF = '0.18 0.1 0';	// Defender version (really wide)
 float DAMAGE_SHELL = 4;				// Single Shotgun Shell (hitscan)
@@ -935,7 +940,7 @@ float DAMAGE_PSHELL = 4;			// Single Shotgun Shell (projectile)
 float DAMAGE_PTSHELL = 4;			// Dead center tracer shell (proj only)
 float LIFE_SHELLS = 6;				// Lifetime before being removed
 
-float SPEED_PLAYSPIKE = 1000;		// Player speed for Spikes
+float SPEED_PLAYSPIKE = 1996;		// Player speed for Spikes - now copper speed ~rj
 float SPEED_TRAPSPIKE = 500;		// Trap shooters
 float SPEED_HKSPIKE = 200;			// Hell Knight (def=300)
 float SPEED_HKSKILL = 50;			// 200=easy, 250=normal, 300=hard, 350=nm
@@ -1091,11 +1096,12 @@ float LIFE_EGG = 1.5;				// Very quick egg hatch!
 float LIFE_FLESH = 2.5;				// Life of zombie flesh
 
 float DAMAGE_NGREFSPIKE = 4;		// Reflected Spike for NG
-float DAMAGE_NGSPIKE = 9;			// Single Spike for NG
+float DAMAGE_NGSPIKE = 12;			// Single Spike for NG
 float DAMAGE_SNGSPIKE = 18;			// Single Spike for SNG
 float DAMAGE_RTSPIKE = 2;			// Re-touch spike damage (lying on floor)
 float DAMAGE_PLAYGRENADE = 120;		// Direct damage from player grenade
 float DAMAGE_MONGRENADE = 40;		// Toned down grenade damage
+float DAMAGE_MONMINIGRENADE = 20;		// multi-g ogres ~rj
 float DAMAGE_MONROCKET = 40;		// Toned down rocket damage
 
 float ELEV_ZAXIS = 200;				// Standard default Z axis adjustment
@@ -1426,10 +1432,10 @@ float BACKPACK_YELTYPE = 2;
 float BACKPACK_REDTYPE = 4;
 
 //----------------------------------------------------------------------
-float AMMO_MAXSHELLS = 200;		// Maximum ammo the player can carry
-float AMMO_MAXNAILS = 200;		// Shells use to be 100
-float AMMO_MAXROCKETS = 100;
-float AMMO_MAXCELLS = 100;
+float AMMO_MAXSHELLS = 200;		// AD default
+float AMMO_MAXNAILS = 300;		// ~rj updated
+float AMMO_MAXROCKETS = 50;		// ~rj updated
+float AMMO_MAXCELLS = 75;		// ~rj updated
 
 float AMMO_SHELLS_SML = 20;		// Ammo quantities for small / large boxes 
 float AMMO_SHELLS_LGR = 40;		// and from weapon pickups
@@ -1671,6 +1677,7 @@ string MODEL_GWEAP_GHOOK = "progs/g_ghook.mdl";		// Large hook mdl
 string MODEL_GWEAP_SG = "progs/g_shot1.mdl";		// From Rubicon
 string MODEL_GWEAP_SSG = "progs/g_shot2.mdl";		// New Model update
 string MODEL_GWEAP_UPSSG = "progs/g_shot3.mdl";		// SSG Upgrade
+string MODEL_GWEAP_QSG = "progs/g_shot4.mdl";		// QSG ~rj
 string MODEL_GWEAP_NG = "progs/g_nail.mdl";			// Remake from me
 string MODEL_GWEAP_SNG = "progs/g_nail2.mdl";
 string MODEL_GWEAP_GL = "progs/g_rock.mdl";
@@ -1686,6 +1693,7 @@ string MODEL_VWEAP_GHOOK = "progs/v_ghook.mdl";		// Grapple Hook
 string MODEL_VWEAP_SG = "progs/v_shot.mdl";
 string MODEL_VWEAP_SSG = "progs/v_shot2.mdl";
 string MODEL_VWEAP_UPSSG = "progs/v_shot3.mdl";		// SSG Upgrade
+string MODEL_VWEAP_QSG = "progs/v_shot4.mdl";		// QSG ~rj
 string MODEL_VWEAP_NG = "progs/v_nail.mdl";
 string MODEL_VWEAP_SNG = "progs/v_nail2.mdl";
 string MODEL_VWEAP_GL = "progs/v_rock.mdl";
