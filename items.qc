@@ -1176,6 +1176,21 @@ void() weapon_touch =
 		else pickupammo = self.aflag;
 		other.ammo_shells = other.ammo_shells + pickupammo;
 	}
+	//---------------------------------------------------------------------- ~rj
+	else if (self.classtype == CT_QUAD_SHOTGUN) {
+		pickupweapon = IT_QUAD_SHOTGUN;
+		pickupmodweapon = IT_NOWEAPON;
+		// Deathmatch players cannot constantly pickup weapons
+		if (deathmatch > 0 && other.items & pickupweapon) return;
+		// Coop players can use weapon spawns as ammo dispensers
+		if (coop > 0 && other.items & pickupweapon) {
+			if (other.ammo_shells > AMMO_MAXSHELLS*0.5) pickupammo = 0;
+			else pickupammo = self.aflag;
+		}
+		else pickupammo = self.aflag;
+		other.ammo_shells = other.ammo_shells + pickupammo;
+	}
+	
 	//----------------------------------------------------------------------
 	else if (self.classtype == CT_NAILGUN) {
 		pickupweapon = IT_NAILGUN;
@@ -1616,6 +1631,45 @@ void() weapon_supershotgun =
 };
 
 //======================================================================
+/*QUAKED weapon_quadshotgun (0 0.5 0.8) (-16 -16 0) (16 16 56) x x x x RESPAWN FLOAT STARTOFF NOEFFECTS NOT_EASY NOT_NORMAL NOT_HARD NOT_DM
+{ model(":progs/g_shot4.mdl"); }
+Quad Shotgun
+-------- KEYS --------
+targetname   : toggle state (use trigger ent for exact state)
+message       : centerprint message when item is picked up
+aflag         : Override ammo quantity for pickup (def=5)
+netname       : Override name of pickup (def=Quad Shotgun)
+respawn_time  : time to wait before respawning (1-x seconds, default varies)
+respawn_count : Total amount of times to respawn (counts down to zero)
+respawn_trig : = 1 Wait for trigger before respawning
+-------- SPAWNFLAGS --------
+RESPAWN  : Can respawn after being picked up
+FLOAT    : No drop to floor test
+STARTOFF : Starts off and waits for trigger
+NOEFFECTS : No particle or effects active
+-------- NOTES --------
+Quad Shotgun
+
+======================================================================*/
+void() weapon_quadshotgun =
+{
+	
+	// Check for custom model setup?
+	item_debugcustomdl();
+	if (self.mdl == "") self.mdl = MODEL_GWEAP_QSG;
+	precache_model (self.mdl);
+	self.weapon = IT_QUAD_SHOTGUN;
+	self.classtype = CT_QUAD_SHOTGUN;
+	if (self.netname == "") self.netname = "Quad Shotgun";
+	
+	// Allow for mapper override on weapon ammo start
+	if (self.aflag == 0) self.aflag = AMMO_SHELLS_WPN;
+	else if (self.aflag < 0) self.aflag = 0;
+	weapon_start();
+};
+
+
+//======================================================================
 /*QUAKED weapon_nailgun (0 0.5 0.8) (-16 -16 0) (16 16 56) x x x x RESPAWN FLOAT STARTOFF NOEFFECTS NOT_EASY NOT_NORMAL NOT_HARD NOT_DM
 { model(":progs/g_nail.mdl"); }
 Perforator (Nailgun)
@@ -1655,12 +1709,12 @@ void() weapon_nailgun =
 //======================================================================
 /*QUAKED weapon_supernailgun (0 0.5 0.8) (-16 -16 0) (16 16 56) x x x x RESPAWN FLOAT STARTOFF NOEFFECTS NOT_EASY NOT_NORMAL NOT_HARD NOT_DM
 { model(":progs/g_nail2.mdl"); }
-Super Perforator (Super Nailgun)
+Impaler
 -------- KEYS --------
 targetname   : toggle state (use trigger ent for exact state)
 message       : centerprint message when item is picked up
 aflag         : Override ammo quantity for pickup (def=30)
-netname       : Override name of pickup (def=Super Nailgun)
+netname       : Override name of pickup (def=Impaler)
 respawn_time  : time to wait before respawning (1-x seconds, default varies)
 respawn_count : Total amount of times to respawn (counts down to zero)
 respawn_trig : = 1 Wait for trigger before respawning
@@ -1670,7 +1724,7 @@ FLOAT    : No drop to floor test
 STARTOFF : Starts off and waits for trigger
 NOEFFECTS : No particle or effects active
 -------- NOTES --------
-Super Perforator (Super Nailgun)
+Impaler
 
 ======================================================================*/
 void() weapon_supernailgun =
@@ -1681,7 +1735,7 @@ void() weapon_supernailgun =
 	precache_model (self.mdl);
 	self.weapon = IT_SUPER_NAILGUN;
 	self.classtype = CT_SUPER_NAILGUN;
-	if (self.netname == "") self.netname = "Super Nailgun";
+	if (self.netname == "") self.netname = "Impaler";		// ~rj - keeping classnames etc the same for simplicity
 	
 	// Allow for mapper override on weapon ammo start
 	if (self.aflag == 0) self.aflag = AMMO_NAILS_WPN;
