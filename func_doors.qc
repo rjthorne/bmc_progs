@@ -7,6 +7,7 @@ float DOOR_DONT_LINK = 4;		// never link this door with anything
 float DOOR_GOLD_KEY = 8;		// Gold Key
 float DOOR_SILVER_KEY = 16;		// Silver Key
 float DOOR_TOGGLE = 32;			// Need trigger to open AND close
+float DOOR_NOLIP = 128;			// Yes this is happening ~rj
 
 //======================================================================
 /*QUAKED func_door (0 .5 .8) ? STARTOPEN SPAWNTRIG DONTLINK GOLD SILVER TOGGLE STARTOFF x Not_Easy Not_Normal Not_Hard Not_DM
@@ -719,7 +720,15 @@ void() func_door =
 	// Second movement speed can be different, yaw_speed
 	if (self.yaw_speed <=0) self.yaw_speed = self.speed;
 	if (!self.wait) self.wait = 3;
-	if (!self.lip) self.lip = 8;
+
+	if (!self.lip) { // fuck you quake ~rj
+		if (self.spawnflags & DOOR_NOLIP) {
+			self.lip = 0;
+		} else {
+			self.lip = 8;
+		}
+	} 
+
 	if (!self.dmg) self.dmg = 2;
 	self.state = STATE_BOTTOM;
 	self.attack_finished = 0;
