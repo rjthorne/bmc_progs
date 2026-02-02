@@ -2,7 +2,29 @@
  SUB FUNCTIONS
 ======================================================================*/
 void() SUB_Null = {};
-void() SUB_Remove = {remove(self);};
+
+/* from copper ~rj
+=============
+SUB_Remove/SUB_RemoveSoon
+
+RemoveSoon is to be used during touch functions to avoid touchlinks errors
+===============
+*/
+void() SUB_Remove = { remove(self); };
+void() SUB_RemoveSoon = 
+{
+	// ensure no shenanigans take place in the next hundredth of a second
+	// otherwise we get weirdness like items being picked up twice at high framerates
+	self.model = string_null;
+	self.solid = SOLID_NOT;
+	self.touch = SUB_Null;
+	self.use = SUB_Null;
+	
+	self.think = SUB_Remove;
+	self.nextthink = time;
+}
+
+
 void(entity inflictor, entity attacker, float damage) SUB_Null_pain = {};
 
 void() SUB_CalcMoveDone;
@@ -669,3 +691,25 @@ void(vector org, entity death_owner) spawn_tdeath =
 	// every trigger in the map to see if it is touching something
 	force_retouch = 2;
 };
+
+/*
+=============
+SUB_ChangeModel  ~rj added from copper(?) for impaler
+
+size changes after a model change, use this to preserve it
+===============
+*/
+void(entity ent, string mdl) SUB_ChangeModel =
+{
+	local vector sz,smin,smax;
+	sz = ent.size;
+	smin = ent.mins;
+	smax = ent.maxs;
+	
+	setmodel(ent, mdl);
+	
+	if (sz == VEC_ORIGIN)
+		setsize(ent, VEC_ORIGIN, VEC_ORIGIN);
+	else
+		setsize(ent, smin, smax);
+}

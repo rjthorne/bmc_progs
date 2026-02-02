@@ -859,7 +859,11 @@ void() PutClientInServer =
 		}
 		// Teleport effect + sound
 		spawn_tdeath (self.origin, self);
-	}	
+	}
+
+	// restore classic notarget behaviour on player spawn ~rj
+	map_notargetblock = 1;
+
 };
 
 // Forward compiler links
